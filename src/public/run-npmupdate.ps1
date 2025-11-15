@@ -139,50 +139,51 @@ class M {
 	[M]::InitializeStack()
 	while ($global:stack.Count -gt 0) {
 		$dir = $global:stack.Pop()
-		if ($dir.Name -eq "node_modules") {
+		if (!$dir -or !$dir.Exists) {
 			continue
 		}
-		$pkg = Join-Path $dir.FullName "package.json"
-		if (Test-Path $pkg) {
-			[T]::PrintLine("Cyan")
-			[T]::PrintText("Cyan", "▶ Processing directory: $($dir.FullName)")
-			Push-Location $dir.FullName
-			try {
-				[M]::UpdatePackageJson()
-				[M]::InstallDependencies()
-				[M]::RunResetScript()
-				[T]::PrintText("Green", "✓ Successfully updated & reset in $($dir.FullName)")
-				# 클라이언트 폴더 처리
-				$clientPath = Join-Path $dir.FullName "client"
-				$clientPkg = Join-Path $clientPath "package.json"
-				if ((Test-Path $clientPath) -and (Test-Path $clientPkg)) {
-					[T]::PrintText("Cyan", "- Found client folder, processing...")
-					Push-Location $clientPath
-					try {
-						[M]::UpdatePackageJson()
-						[M]::InstallDependencies()
-						[T]::PrintText("Cyan", "- Running client reset script...")
-						pnpm run reset --if-present
-						[T]::PrintText("Green", "✓ Successfully updated & reset in client folder")
+		else {
+			$pkg = Join-Path $dir.FullName "package.json"
+			if (Test-Path $pkg) {
+				[T]::PrintLine("Cyan")
+				[T]::PrintText("Cyan", "▶ Processing directory: $($dir.FullName)")
+				Push-Location $dir.FullName
+				try {
+					[M]::UpdatePackageJson()
+					[M]::InstallDependencies()
+					[M]::RunResetScript()
+					[T]::PrintText("Green", "✓ Successfully updated & reset in $($dir.FullName)")
+					# 클라이언트 폴더가 있는지 확인하고 처리
+					$clientPath = Join-Path $dir.FullName "client"
+					$clientPkg = Join-Path $clientPath "package.json"
+					if (Test-Path $clientPkg) {
+						[T]::PrintText("Cyan", "- Found client folder, processing...")
+						Push-Location $clientPath
+						try {
+							[M]::UpdatePackageJson()
+							[M]::InstallDependencies()
+							[T]::PrintText("Cyan", "- Running client reset script...")
+							pnpm run reset --if-present
+							[T]::PrintText("Green", "✓ Successfully updated & reset in client folder")
+						}
+						catch {
+							[T]::PrintText("Red", "! Error in client folder: $($_.Exception.Message)")
+						}
+						finally {
+							Pop-Location
+						}
 					}
-					catch {
-						[T]::PrintText("Red", "! Error in client folder: $($_.Exception.Message)")
-					}
-					finally {
-						Pop-Location
-					}
+					[T]::PrintEmpty()
 				}
-				[T]::PrintEmpty()
+				catch {
+					[T]::PrintText("Red", "! Error in $($dir.FullName): $($_.Exception.Message)")
+				}
+				finally {
+					Pop-Location
+				}
 			}
-			catch {
-				[T]::PrintText("Red", "! Error in $($dir.FullName): $($_.Exception.Message)")
-			}
-			finally {
-				[M]::CleanupEnvironment()
-				Pop-Location
-			}
+			[M]::AddChildDirectories($dir.FullName)
 		}
-		[M]::AddChildDirectories($dir.FullName)
 	}
 }
 
