@@ -5,17 +5,17 @@
   "publisher": "JUNGHO",
   "license": "Apache-2.0",
   "main": "index.js",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "repository": {
     "type": "git",
     "url": "https://github.com/JUNGHO-GIT/POWERSHELL.git"
   },
   "scripts": {
-    "watch": "node .node/swc.cjs --npm --watch",
-    "compile": "node .node/swc.cjs --npm --compile",
-    "reset": "node .node/reset.cjs --npm",
+    "watch": "node .node/swc.cjs --pnpm --watch",
+    "compile": "node .node/swc.cjs --pnpm --compile",
+    "reset": "node .node/reset.cjs --pnpm",
     "autofix": "node .node/autofix.cjs --fix",
     "gcloud": "node .node/gcloud.cjs --git",
-    "vsce": "node .node/vsce.cjs --npm"
+    "vsce": "node .node/vsce.cjs --pnpm"
   }
 }

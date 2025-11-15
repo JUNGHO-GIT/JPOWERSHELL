@@ -80,31 +80,57 @@ class M {
 		$global:stack.Push((Get-Item -Path $global:rootPath))
 	}
 
-	static [void] UpdatePackageJson() {
-		pnpm dlx npm-check-updates -u
+	static [string] GetPackageManagerFromReset(
+		[string]$pkgPath
+	) {
+		try {
+			$pkgContent = Get-Content -Path $pkgPath -Raw | ConvertFrom-Json
+			$resetScript = $pkgContent.scripts.reset
+			if ($resetScript -match '--(\w+)') {
+				return $matches[1]
+			}
+		}
+		catch {
+			[T]::PrintText("Yellow", "- Warning: unable to parse package.json for reset argument")
+		}
+		return "pnpm"
 	}
 
-	static [void] InstallDependencies() {
+	static [void] UpdatePackageJson(
+		[string]$pm = "pnpm"
+	) {
+		$pm -eq "npm" ? (
+			& npx npm-check-updates -u
+		) : (
+			& $pm dlx npm-check-updates -u
+		)
+	}
+
+	static [void] InstallDependencies(
+		[string]$pm = "pnpm"
+	) {
 		$env:CI = "true"
 		$installed = $false
 		try {
-			pnpm install 2>&1 | Out-Null
+			& $pm install 2>&1 | Out-Null
 			if ($LASTEXITCODE -eq 0) {
 				$installed = $true
 			}
 		}
 		catch {
-			[T]::PrintText("Yellow", "- pnpm install failed or blocked by prompt: $($_.Exception.Message)")
+			[T]::PrintText("Yellow", "- $pm install failed or blocked by prompt: $($_.Exception.Message)")
 		}
 		if (-not $installed) {
 			[T]::PrintText("Yellow", "- Retrying with forced 'Y' to stdin...")
-			"Y" | pnpm install 2>&1 | Out-Null
+			"Y" | & $pm install 2>&1 | Out-Null
 		}
 	}
 
-	static [void] RunResetScript() {
+	static [void] RunResetScript(
+		[string]$pm = "pnpm"
+	) {
 		[T]::PrintText("Cyan", "- Running reset script...")
-		pnpm run reset --if-present
+		& $pm run reset
 	}
 
 	static [void] CleanupEnvironment() {
@@ -115,7 +141,7 @@ class M {
 		[string]$dirFullName
 	) {
 		try {
-			Get-ChildItem -Path $dirFullName -Directory -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "node_modules" } | ForEach-Object {
+			Get-ChildItem -Path $dirFullName -Directory -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "node_modules" -and $_.Name -ne "client" } | ForEach-Object {
 				$global:stack.Push($_)
 			}
 		}
@@ -145,25 +171,28 @@ class M {
 		else {
 			$pkg = Join-Path $dir.FullName "package.json"
 			if (Test-Path $pkg) {
+				$pm = [M]::GetPackageManagerFromReset($pkg)
 				[T]::PrintLine("Cyan")
 				[T]::PrintText("Cyan", "▶ Processing directory: $($dir.FullName)")
+				[T]::PrintText("Cyan", "▶ Package Manager: [$pm]")
 				Push-Location $dir.FullName
 				try {
-					[M]::UpdatePackageJson()
-					[M]::InstallDependencies()
-					[M]::RunResetScript()
+					[M]::UpdatePackageJson($pm)
+					[M]::InstallDependencies($pm)
+					[M]::RunResetScript($pm)
 					[T]::PrintText("Green", "✓ Successfully updated & reset in $($dir.FullName)")
 					# 클라이언트 폴더가 있는지 확인하고 처리
 					$clientPath = Join-Path $dir.FullName "client"
 					$clientPkg = Join-Path $clientPath "package.json"
 					if (Test-Path $clientPkg) {
+						$clientPm = [M]::GetPackageManagerFromReset($clientPkg)
 						[T]::PrintText("Cyan", "- Found client folder, processing...")
+						[T]::PrintText("Cyan", "- Client Package Manager: [$clientPm]")
 						Push-Location $clientPath
 						try {
-							[M]::UpdatePackageJson()
-							[M]::InstallDependencies()
-							[T]::PrintText("Cyan", "- Running client reset script...")
-							pnpm run reset --if-present
+							[M]::UpdatePackageJson($clientPm)
+							[M]::InstallDependencies($clientPm)
+							[M]::RunResetScript($clientPm)
 							[T]::PrintText("Green", "✓ Successfully updated & reset in client folder")
 						}
 						catch {
