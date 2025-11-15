@@ -1,0 +1,21 @@
+{
+  "name": "jpowershell",
+  "displayName": "JpowerShell",
+  "description": "Powershell custom code",
+  "publisher": "JUNGHO",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JUNGHO-GIT/POWERSHELL.git"
+  },
+  "scripts": {
+    "watch": "node .node/swc.cjs --npm --watch",
+    "compile": "node .node/swc.cjs --npm --compile",
+    "reset": "node .node/reset.cjs --npm",
+    "autofix": "node .node/autofix.cjs --fix",
+    "gcloud": "node .node/gcloud.cjs --git",
+    "vsce": "node .node/vsce.cjs --npm"
+  }
+}
