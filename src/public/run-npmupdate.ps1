@@ -89,21 +89,17 @@ class M {
 		$installed = $false
 		try {
 			pnpm install 2>&1 | Out-Null
-			$LASTEXITCODE -eq 0 ? (
+			if ($LASTEXITCODE -eq 0) {
 				$installed = $true
-			) : (
-				$null
-			)
+			}
 		}
 		catch {
 			[T]::PrintText("Yellow", "- pnpm install failed or blocked by prompt: $($_.Exception.Message)")
 		}
-		-not $installed ? (
-			[T]::PrintText("Yellow", "- Retrying with forced 'Y' to stdin..."),
+		if (-not $installed) {
+			[T]::PrintText("Yellow", "- Retrying with forced 'Y' to stdin...")
 			"Y" | pnpm install 2>&1 | Out-Null
-		) : (
-			$null
-		)
+		}
 	}
 
 	static [void] RunResetScript() {
@@ -143,55 +139,50 @@ class M {
 	[M]::InitializeStack()
 	while ($global:stack.Count -gt 0) {
 		$dir = $global:stack.Pop()
-		$dir.Name -eq "node_modules" ? (
+		if ($dir.Name -eq "node_modules") {
 			continue
-		) : (
-			$pkg = Join-Path $dir.FullName "package.json",
-			Test-Path $pkg ? (
-				[T]::PrintLine("Cyan"),
-				[T]::PrintText("Cyan", "▶ Processing directory: $($dir.FullName)"),
-				Push-Location $dir.FullName,
-				try {
-					[M]::UpdatePackageJson(),
-					[M]::InstallDependencies(),
-					[M]::RunResetScript(),
-					[T]::PrintText("Green", "✓ Successfully updated & reset in $($dir.FullName)"),
-					# 클라이언트 폴더가 있는지 확인하고 처리
-					$clientPath = Join-Path $dir.FullName "client",
-					$clientPkg = Join-Path $clientPath "package.json",
-					(Test-Path $clientPath) -and (Test-Path $clientPkg) ? (
-						[T]::PrintText("Cyan", "- Found client folder, processing..."),
-						Push-Location $clientPath,
-						try {
-							[M]::UpdatePackageJson(),
-							[M]::InstallDependencies(),
-							[T]::PrintText("Cyan", "- Running client reset script..."),
-							pnpm run reset --if-present,
-							[T]::PrintText("Green", "✓ Successfully updated & reset in client folder")
-						}
-						catch {
-							[T]::PrintText("Red", "! Error in client folder: $($_.Exception.Message)")
-						}
-						finally {
-							Pop-Location
-						}
-					) : (
-						$null
-					),
-					[T]::PrintEmpty()
+		}
+		$pkg = Join-Path $dir.FullName "package.json"
+		if (Test-Path $pkg) {
+			[T]::PrintLine("Cyan")
+			[T]::PrintText("Cyan", "▶ Processing directory: $($dir.FullName)")
+			Push-Location $dir.FullName
+			try {
+				[M]::UpdatePackageJson()
+				[M]::InstallDependencies()
+				[M]::RunResetScript()
+				[T]::PrintText("Green", "✓ Successfully updated & reset in $($dir.FullName)")
+				# 클라이언트 폴더 처리
+				$clientPath = Join-Path $dir.FullName "client"
+				$clientPkg = Join-Path $clientPath "package.json"
+				if ((Test-Path $clientPath) -and (Test-Path $clientPkg)) {
+					[T]::PrintText("Cyan", "- Found client folder, processing...")
+					Push-Location $clientPath
+					try {
+						[M]::UpdatePackageJson()
+						[M]::InstallDependencies()
+						[T]::PrintText("Cyan", "- Running client reset script...")
+						pnpm run reset --if-present
+						[T]::PrintText("Green", "✓ Successfully updated & reset in client folder")
+					}
+					catch {
+						[T]::PrintText("Red", "! Error in client folder: $($_.Exception.Message)")
+					}
+					finally {
+						Pop-Location
+					}
 				}
-				catch {
-					[T]::PrintText("Red", "! Error in $($dir.FullName): $($_.Exception.Message)")
-				}
-				finally {
-					[M]::CleanupEnvironment(),
-					Pop-Location
-				}
-			) : (
-				$null
-			),
-			[M]::AddChildDirectories($dir.FullName)
-		)
+				[T]::PrintEmpty()
+			}
+			catch {
+				[T]::PrintText("Red", "! Error in $($dir.FullName): $($_.Exception.Message)")
+			}
+			finally {
+				[M]::CleanupEnvironment()
+				Pop-Location
+			}
+		}
+		[M]::AddChildDirectories($dir.FullName)
 	}
 }
 
