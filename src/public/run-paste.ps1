@@ -13,8 +13,10 @@ $global:targetPath = @("0.Java", "1.Node")
 $global:ignoreFolders = @("node_modules", "bin", "target", "build", "out", "dist", ".gradle", ".idea")
 $global:workTypes = @()
 $global:selectedRoots = @()
+$global:deleteFiles = @()
 $global:workInput = ""
 $global:targetInput = ""
+$global:deleteInput = ""
 
 # 2. 메인  ---------------------------------------------------------------------------
 class M {
@@ -191,6 +193,57 @@ class M {
 		return @{ "success" = $totalSuccess; "fail" = $totalFail }
 	}
 
+	## 파일 삭제
+	static [hashtable] DeleteFiles([string[]]$fileNames, [string[]]$roots) {
+		[T]::PrintLine("Cyan")
+		[T]::PrintText("Cyan", "▶ 파일 삭제 시작")
+		[T]::PrintEmpty()
+
+		$totalSuccess = 0
+		$totalFail = 0
+
+		foreach ($root in $roots) {
+			[T]::PrintLine("White")
+			[T]::PrintText("White", "- 처리중: $root")
+			[T]::PrintEmpty()
+
+			$result = [M]::ProcessDirectory($root, {
+				param($dir)
+
+				$pkg = Join-Path $dir.FullName "package.json"
+				if (-not (Test-Path $pkg)) {
+					return $null
+				}
+
+				[T]::PrintText("White", "- 처리 중: $($dir.FullName)")
+				$deletedCount = 0
+
+				foreach ($fileName in $fileNames) {
+					$filePath = Join-Path $dir.FullName $fileName
+					if (Test-Path $filePath) {
+						try {
+							Remove-Item -Path $filePath -Force
+							[T]::PrintText("Green", "✓ 삭제됨: $fileName")
+							$deletedCount++
+						}
+						catch {
+							[T]::PrintText("Red", "! 삭제 실패: $fileName - $($_.Exception.Message)")
+						}
+					}
+				}
+
+				return ($deletedCount -gt 0) ? @{ "success" = $true } : $null
+			})
+
+			[T]::PrintLine("Green")
+			[T]::PrintText("Green", "✓ 루트 완료 - 성공: $($result.success) | 실패: $($result.fail)")
+			$totalSuccess += $result.success
+			$totalFail += $result.fail
+		}
+
+		return @{ "success" = $totalSuccess; "fail" = $totalFail }
+	}
+
 	## 디렉토리 순회 처리
 	static [hashtable] ProcessDirectory([string]$root, [scriptblock]$action) {
 		$stack = New-Object System.Collections.Generic.Stack[System.IO.DirectoryInfo]
@@ -291,9 +344,36 @@ class M {
 	if ($global:selectedRoots.Count -eq 0) {
 		[T]::PrintExit("Red", "! 최소 1개 이상의 대상 경로가 필요합니다.")
 	}
+
+	[T]::PrintLine("Yellow")
+	[T]::PrintText("Yellow", "▶ 삭제할 파일명을 입력하세요 (선택사항, 여러 개 가능)")
+	[T]::PrintText("DarkGray", "- 예: file1.txt,file2.js")
+	[T]::PrintText("DarkGray", "- 입력 없이 Enter 시 건너뜀")
+	[T]::PrintEmpty()
+	[T]::TextInput("Yellow", "▶ 파일명 (쉼표로 구분):", ([ref]$global:deleteInput))
+
+	if ($global:deleteInput.Trim() -ne "") {
+		$deleteNames = $global:deleteInput -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+		foreach ($name in $deleteNames) {
+			$global:deleteFiles += $name
+			[T]::PrintText("Green", "✓ 삭제 대상: $name")
+		}
+	}
+	else {
+		[T]::PrintText("DarkGray", "- 파일 삭제 건너뜀")
+	}
 }
 
-# 5. 복사 작업 실행 ---------------------------------------------------------------------------
+# 5. 파일 삭제 실행 ---------------------------------------------------------------------------
+& {
+	if ($global:deleteFiles.Count -gt 0) {
+		$result = [M]::DeleteFiles($global:deleteFiles, $global:selectedRoots)
+		[T]::PrintLine("Green")
+		[T]::PrintText("Green", "▶ 파일 삭제 완료 - 성공: $($result.success) | 실패: $($result.fail)")
+	}
+}
+
+# 6. 복사 작업 실행 ---------------------------------------------------------------------------
 & {
 	foreach ($workType in $global:workTypes) {
 		$folderName = $selectedFolder[[int]$workType - 1]
