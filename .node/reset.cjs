@@ -3,42 +3,11 @@
 const { spawnSync } = require("child_process");
 const { rmSync, existsSync } = require("fs");
 const { join } = require("path");
+const { logger } = require(`./utils.cjs`);
 
 // 인자 파싱 ------------------------------------------------------------------------------------
 const argv = process.argv.slice(2);
 const args1 = argv.find(arg => [`--npm`, `--pnpm`, `--yarn`, `--bun`].includes(arg))?.replace(`--`, ``) || ``;
-
-// 로깅 함수 -----------------------------------------------------------------------------------
-const logger = (type=``, message=``) => {
-	const format = (text=``) => text.trim().replace(/^\s+/gm, ``);
-	const line = `----------------------------------------`;
-	const colors = {
-		line: `\x1b[38;5;214m`,
-		info: `\x1b[36m`,
-		success: `\x1b[32m`,
-		warn: `\x1b[33m`,
-		error: `\x1b[31m`,
-		reset: `\x1b[0m`
-	};
-	const separator = `${colors.line}${line}${colors.reset}`;
-
-	type === `info` && console.log(format(`
-		${separator}
-		${colors.info}[INFO]${colors.reset} - ${message}
-	`));
-	type === `success` && console.log(format(`
-		${separator}
-		${colors.success}[SUCCESS]${colors.reset} - ${message}
-	`));
-	type === `warn` && console.log(format(`
-		${separator}
-		${colors.warn}[WARN]${colors.reset} - ${message}
-	`));
-	type === `error` && console.log(format(`
-		${separator}
-		${colors.error}[ERROR]${colors.reset} - ${message}
-	`));
-};
 
 // 1. 시스템 준비 (대기) ---------------------------------------------------------------------
 const prepareSystem = () => {
@@ -54,7 +23,7 @@ const prepareSystem = () => {
 const cleanup = () => {
 	logger(`info`, `파일 삭제 시작`);
 	const targets = [
-		`node_modules`, `package-lock.json`, `bun.lock`,
+		`node_modules`, `package-lock.json`, `bun.lockb`,
 		`yarn.lock`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`
 	];
 	targets.forEach((target, index) => {
@@ -82,7 +51,7 @@ const cleanup = () => {
 
 // 3. 명령 실행 함수 ------------------------------------------------------------------------------
 // @ts-ignore
-const runCommand = (cmd=``, args=[]) => {
+const runCommand = (cmd = ``, args = []) => {
 	logger(`info`, `실행: ${cmd} ${args.join(` `)}`);
 
 	const result = spawnSync(cmd, args, {
@@ -104,7 +73,7 @@ const runCommand = (cmd=``, args=[]) => {
 };
 
 // 4. 패키지매니저 설치 ----------------------------------------------------------------------------
-const installWithPkgManager = (manager=``) => {
+const installWithPkgManager = (manager = ``) => {
 	logger(`info`, `${manager}로 의존성 설치 시도`);
 
 	manager === `npm` ? (
