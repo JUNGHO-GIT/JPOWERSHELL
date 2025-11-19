@@ -1,13 +1,13 @@
 ﻿# run-envbackup.ps1
 
+# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
+using module ..\common\classes.psm1
+
 # 0. 전역변수 설정 ---------------------------------------------------------------------------
 $global:line = "────────────────────────────────────────────────────────────────"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
 $global:outputPath = "C:\Users\jungh\Downloads\env_variables.txt"
-
-# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
-. "$PSScriptRoot/../common/classes.ps1"
 
 # 3. 프로세스 시작 --------------------------------------------------------------------------------
 & {
@@ -34,7 +34,7 @@ $global:outputPath = "C:\Users\jungh\Downloads\env_variables.txt"
 		}
 
 		[T]::PrintLine("Green")
-		[T]::PrintText("Green", "? 환경변수들이 $global:outputPath 에 저장되었습니다.")
+		[T]::PrintText("Green", "✓ 환경변수들이 $global:outputPath 에 저장되었습니다.")
 	}
 	catch {
 		[T]::PrintLine("Red")
@@ -46,5 +46,5 @@ $global:outputPath = "C:\Users\jungh\Downloads\env_variables.txt"
 # 99. 프로세스 종료 ---------------------------------------------------------------------------
 & {
 	[T]::PrintLine("Green")
-	[T]::PrintExit("Green", "? 모든 작업이 정상적으로 완료되었습니다.")
+	[T]::PrintExit("Green", "✓ 모든 작업이 정상적으로 완료되었습니다.")
 }

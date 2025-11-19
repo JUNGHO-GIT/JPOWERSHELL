@@ -1,14 +1,14 @@
 # fix-pwshloading.ps1
 
+# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
+using module ..\common\classes.psm1
+
 # 0. 전역변수 설정 ---------------------------------------------------------------------------
 $global:line = "────────────────────────────────────────────────────────────────"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
 $global:registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\SystemCertificates\ChainEngine"
 $global:timeoutValue = 1000
-
-# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
-. "$PSScriptRoot/../common/classes.ps1"
 
 # 2. 메인 ----------------------------------------------------------------------------------------
 class M {

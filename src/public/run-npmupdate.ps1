@@ -1,14 +1,14 @@
 # run-npmupdate.ps1
 
+# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
+using module ..\common\classes.psm1
+
 # 0. 전역변수 설정 ---------------------------------------------------------------------------
 $global:line = "────────────────────────────────────────────────────────────────"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
 $global:rootPath = "C:\JUNGHO\2.IDE\2.Vscode\Workspace\2.Project\1.Node"
 $global:stack = New-Object System.Collections.Generic.Stack[System.IO.DirectoryInfo]
-
-# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
-. "$PSScriptRoot/../common/classes.ps1"
 
 # 2. 메인 ----------------------------------------------------------------------------------------
 class M {

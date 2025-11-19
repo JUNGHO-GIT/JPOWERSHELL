@@ -1,13 +1,13 @@
 ﻿# kill-java.ps1
 
+# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
+using module ..\common\classes.psm1
+
 # 0. 전역변수 설정 ---------------------------------------------------------------------------
 $global:line = "────────────────────────────────────────────────────────────────"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
 $global:javaProcesses = Get-Process java -ErrorAction SilentlyContinue
-
-# 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
-. "$PSScriptRoot/../common/classes.ps1"
 
 # 3. 프로세스 시작 --------------------------------------------------------------------------------
 & {
