@@ -1,114 +1,50 @@
-# run-envbackup.ps1
+ï»¿# run-envbackup.ps1
 
-# 0. Àü¿ªº¯¼ö ¼³Á¤ ---------------------------------------------------------------------------
-$global:line = "¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡"
+# 0. ì „ì—­ë³€ìˆ˜ ì„¤ì • ---------------------------------------------------------------------------
+$global:line = "â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
 $global:outputPath = "C:\Users\jungh\Downloads\env_variables.txt"
 
-# 1. ÅØ½ºÆ® -----------------------------------------------------------------------------------
-class T {
-	## ÁÙ³ª´® Ãâ·Â
-	static [void] PrintEmpty() {
-		Write-Host ""
-	}
+# 1. ê³µí†µ í´ë˜ìŠ¤ ê°€ì ¸ì˜¤ê¸° ---------------------------------------------------------------------
+. "$PSScriptRoot/../common/classes.ps1"
 
-	## ÁÙ ±¸ºĞÀÚ Ãâ·Â
-	static [void] PrintLine(
-		[string]$color = "White"
-	) {
-		Write-Host ""
-		Write-Host $global:line -ForegroundColor $color
-	}
-
-	## ÅØ½ºÆ® Ãâ·Â
-	static [void] PrintText(
-		[string]$color = "White",
-		[string]$message = ""
-	) {
-		Write-Host $message -ForegroundColor $color
-	}
-
-	## Á¾·á ¸Ş½ÃÁö Ãâ·Â
-	static [void] PrintExit(
-		[string]$color = "Red",
-		[string]$message = ""
-	) {
-		Write-Host $message -ForegroundColor $color
-		Write-Host ""
-		Write-Host "! ¾Æ¹« Å°³ª ´©¸£¸é Á¾·áµË´Ï´Ù..." -ForegroundColor $color
-		[void][System.Console]::ReadKey($true)
-		exit
-	}
-
-	## ÅØ½ºÆ® Æ÷¸Ë
-	static [string] TextFormat(
-		[string]$str = "",
-		[int]$target = 50
-	) {
-		$str = "$str"
-		$width = 0
-		$result = ""
-		foreach ($ch in $str.ToCharArray()) {
-			$len = ([System.Text.Encoding]::GetEncoding("euc-kr").GetByteCount($ch))
-			if ($width + $len -gt $target) {
-				break
-			}
-			$result += $ch
-			$width += $len
-		}
-		$pad = $target - $width
-		$pad -gt 0 && ($result += (" " * $pad))
-		return $result
-	}
-
-	## ÅØ½ºÆ® ÀÔ·Â
-	static [void] TextInput(
-		[string]$color = "Green",
-		[string]$message = "",
-		[ref]$target
-	) {
-		Write-Host $message -ForegroundColor $color
-		$target.Value = Read-Host "- "
-	}
-}
-
-# 3. ÇÁ·Î¼¼½º ½ÃÀÛ --------------------------------------------------------------------------------
+# 3. í”„ë¡œì„¸ìŠ¤ ì‹œì‘ --------------------------------------------------------------------------------
 & {
 	[T]::PrintLine("Cyan")
-	[T]::PrintText("Cyan", "¢º ÆÄÀÏ ÀÌ¸§: [$global:fileName]")
-	[T]::PrintText("Cyan", "¢º ÇöÀç ½Ã°£: [$global:currentTime]")
+	[T]::PrintText("Cyan", "â–¶ íŒŒì¼ ì´ë¦„: [$global:fileName]")
+	[T]::PrintText("Cyan", "â–¶ í˜„ì¬ ì‹œê°„: [$global:currentTime]")
 }
 
-# 4. È¯°æº¯¼ö ¹é¾÷ ---------------------------------------------------------------------------
+# 4. í™˜ê²½ë³€ìˆ˜ ë°±ì—… ---------------------------------------------------------------------------
 & {
 	[T]::PrintLine("Yellow")
-	[T]::PrintText("Yellow", "¢º È¯°æº¯¼ö ¹é¾÷ ½ÃÀÛ")
+	[T]::PrintText("Yellow", "â–¶ í™˜ê²½ë³€ìˆ˜ ë°±ì—… ì‹œì‘")
 
 	try {
 
-		# ±âÁ¸ ÆÄÀÏÀÌ ÀÖÀ¸¸é »èÁ¦
+		# ê¸°ì¡´ íŒŒì¼ì´ ìˆìœ¼ë©´ ì‚­ì œ
 		if (Test-Path $global:outputPath) {
 			Remove-Item $global:outputPath
 		}
 
-		# È¯°æº¯¼ö¸¦ ÆÄÀÏ¿¡ ÀúÀå
+		# í™˜ê²½ë³€ìˆ˜ë¥¼ íŒŒì¼ì— ì €ì¥
 		Get-ChildItem Env: | ForEach-Object {
 			"$($_.Name)=$($_.Value)" | Out-File -FilePath $global:outputPath -Append -Encoding UTF8
 		}
 
 		[T]::PrintLine("Green")
-		[T]::PrintText("Green", "? È¯°æº¯¼öµéÀÌ $global:outputPath ¿¡ ÀúÀåµÇ¾ú½À´Ï´Ù.")
+		[T]::PrintText("Green", "? í™˜ê²½ë³€ìˆ˜ë“¤ì´ $global:outputPath ì— ì €ì¥ë˜ì—ˆìŠµë‹ˆë‹¤.")
 	}
 	catch {
 		[T]::PrintLine("Red")
-		[T]::PrintText("Red", "! È¯°æº¯¼ö ¹é¾÷ Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù: $($_.Exception.Message)")
-		[T]::PrintExit("Red", "! ÇÁ·Î¼¼½º¸¦ Á¾·áÇÕ´Ï´Ù.")
+		[T]::PrintText("Red", "! í™˜ê²½ë³€ìˆ˜ ë°±ì—… ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤: $($_.Exception.Message)")
+		[T]::PrintExit("Red", "! í”„ë¡œì„¸ìŠ¤ë¥¼ ì¢…ë£Œí•©ë‹ˆë‹¤.")
 	}
 }
 
-# 99. ÇÁ·Î¼¼½º Á¾·á ---------------------------------------------------------------------------
+# 99. í”„ë¡œì„¸ìŠ¤ ì¢…ë£Œ ---------------------------------------------------------------------------
 & {
 	[T]::PrintLine("Green")
-	[T]::PrintExit("Green", "? ¸ğµç ÀÛ¾÷ÀÌ Á¤»óÀûÀ¸·Î ¿Ï·áµÇ¾ú½À´Ï´Ù.")
+	[T]::PrintExit("Green", "? ëª¨ë“  ì‘ì—…ì´ ì •ìƒì ìœ¼ë¡œ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.")
 }
