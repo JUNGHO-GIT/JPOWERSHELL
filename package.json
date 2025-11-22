@@ -5,7 +5,7 @@
   "publisher": "JUNGHO",
   "license": "Apache-2.0",
   "main": "index.js",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/JUNGHO-GIT/POWERSHELL.git"
@@ -15,6 +15,6 @@
     "compile": "bun .node/swc.cjs --bun --compile",
     "reset": "bun .node/reset.cjs --bun --reset",
     "fix": "bun .node/fix.cjs --bun --fix",
-    "gcloud": "bun .node/gcloud.cjs --bun --deploy"
+    "git": "bun .node/git.cjs --bun --push"
   }
 }
