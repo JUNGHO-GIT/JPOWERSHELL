@@ -210,29 +210,31 @@ class M {
 			$result = [M]::ProcessDirectory($root, {
 				param($dir)
 
-				$pkg = Join-Path $dir.FullName "package.json"
-				if (-not (Test-Path $pkg)) {
-					return $null
-				}
-
 				[T]::PrintText("White", "- 처리 중: $($dir.FullName)")
 				$deletedCount = 0
+				$failedCount = 0
 
 				foreach ($fileName in $fileNames) {
 					$filePath = Join-Path $dir.FullName $fileName
 					if (Test-Path $filePath) {
 						try {
-							Remove-Item -Path $filePath -Force
-							[T]::PrintText("Green", "✓ 삭제됨: $fileName")
+							Remove-Item -Path $filePath -Force -Recurse
+							[T]::PrintText("Green", "✓ 삭제됨: $filePath")
 							$deletedCount++
 						}
 						catch {
-							[T]::PrintText("Red", "! 삭제 실패: $fileName - $($_.Exception.Message)")
+							[T]::PrintText("Red", "! 삭제 실패: $filePath - $($_.Exception.Message)")
+							$failedCount++
 						}
 					}
 				}
 
-				return ($deletedCount -gt 0) ? @{ "success" = $true } : $null
+				if ($deletedCount -gt 0 -or $failedCount -gt 0) {
+					return @{ "success" = ($deletedCount -gt 0) }
+				}
+				else {
+					return $null
+				}
 			})
 
 			[T]::PrintLine("Green")

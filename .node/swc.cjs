@@ -5,6 +5,8 @@
 
 const { spawn } = require(`child_process`);
 const process = require(`process`);
+const fs = require(`fs`);
+const path = require(`path`);
 const { logger, runCmd, validateDir, delDir } = require(`./utils.cjs`);
 
 // 인자 파싱 ------------------------------------------------------------------------------------
@@ -12,9 +14,16 @@ const TITLE = `swc.cjs`;
 const argv = process.argv.slice(2);
 const args1 = argv.find(arg => [`--npm`, `--pnpm`, `--yarn`, `--bun`].includes(arg))?.replace(`--`, ``) || ``;
 const args2 = argv.find(arg => [`--compile`, `--watch`, `--start`, `--build`].includes(arg))?.replace(`--`, ``) || ``;
+const args3 = argv.find(arg => [`--server`, `--client`].includes(arg))?.replace(`--`, ``) || ``;
+
+// 유틸: 파일 존재 확인 --------------------------------------------------------------------------
+const hasFile = (filePath = ``) => {
+	const absPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
+	return fs.existsSync(absPath);
+};
 
 // 컴파일 실행 ----------------------------------------------------------------------------------
-const runCompile  = () => {
+const runCompile = () => {
 	logger(`info`, `컴파일 시작`);
 
 	const outDir = validateDir([`out`, `dist`, `build`]);
@@ -135,16 +144,74 @@ const runWatch = () => {
 const runStart = () => {
 	logger(`info`, `스타트 모드 시작`);
 
-	const startArgs = args1 === `npm` ? (
-		[`exec`, `--`, `tsx`, `watch`, `--clear-screen=false`, `--ignore`, `node_modules`, `index.ts`]
-	) : args1 === `pnpm` ? (
-		[`exec`, `tsx`, `watch`, `--clear-screen=false`, `--ignore`, `node_modules`, `index.ts`]
-	) : args1 === `yarn` ? (
-		[`tsx`, `watch`, `--clear-screen=false`, `--ignore`, `node_modules`, `index.ts`]
-	) : args1 === `bun` ? (
-		[`--watch`, `index.ts`]
+	const isClient = args3 === `client`;
+
+	const viteConfigFiles = [
+		`vite.config.ts`,
+		`vite.config.js`,
+		`vite.config.mts`,
+		`vite.config.mjs`
+	];
+	const hasViteConfig = viteConfigFiles.some(file => hasFile(file));
+	const hasNextConfig = hasFile(`next.config.js`) || hasFile(`next.config.mjs`);
+	const hasReactScripts = hasFile(path.join(`node_modules`, `react-scripts`, `bin`, `react-scripts.js`));
+
+	const startArgs = isClient ? (
+		args1 === `npm` ? (
+			hasViteConfig ? (
+				[`exec`, `--`, `vite`, `dev`]
+			) : hasNextConfig ? (
+				[`exec`, `--`, `next`, `dev`]
+			) : hasReactScripts ? (
+				[`exec`, `--`, `react-scripts`, `start`]
+			) : (
+				[`run`, `dev`]
+			)
+		) : args1 === `pnpm` ? (
+			hasViteConfig ? (
+				[`exec`, `vite`, `dev`]
+			) : hasNextConfig ? (
+				[`exec`, `next`, `dev`]
+			) : hasReactScripts ? (
+				[`exec`, `react-scripts`, `start`]
+			) : (
+				[`run`, `dev`]
+			)
+		) : args1 === `yarn` ? (
+			hasViteConfig ? (
+				[`vite`, `dev`]
+			) : hasNextConfig ? (
+				[`next`, `dev`]
+			) : hasReactScripts ? (
+				[`react-scripts`, `start`]
+			) : (
+				[`dev`]
+			)
+		) : args1 === `bun` ? (
+			hasViteConfig ? (
+				[`x`, `vite`, `dev`]
+			) : hasNextConfig ? (
+				[`x`, `next`, `dev`]
+			) : hasReactScripts ? (
+				[`x`, `react-scripts`, `start`]
+			) : (
+				[`run`, `dev`]
+			)
+		) : (
+			[]
+		)
 	) : (
-		[]
+		args1 === `npm` ? (
+			[`exec`, `--`, `tsx`, `watch`, `--clear-screen=false`, `--ignore`, `node_modules`, `index.ts`]
+		) : args1 === `pnpm` ? (
+			[`exec`, `tsx`, `watch`, `--clear-screen=false`, `--ignore`, `node_modules`, `index.ts`]
+		) : args1 === `yarn` ? (
+			[`tsx`, `watch`, `--clear-screen=false`, `--ignore`, `node_modules`, `index.ts`]
+		) : args1 === `bun` ? (
+			[`--watch`, `index.ts`]
+		) : (
+			[]
+		)
 	);
 
 	const startProc = spawn(args1, startArgs, {
@@ -164,10 +231,10 @@ const runStart = () => {
 
 	startProc.on(`close`, (code) => {
 		const hasFail = code !== 0;
-		hasFail && logger(`warn`, `tsx 종료 (exit code: ${code})`);
+		hasFail && logger(`warn`, `start 프로세스 종료 (exit code: ${code})`);
 	});
 
-	logger(`success`, `스타트 모드 실행 중`);
+	logger(`success`, isClient ? `리액트 클라이언트 실행 중` : `스타트 모드 실행 중`);
 };
 
 // 실행 ---------------------------------------------------------------------------------------
@@ -175,6 +242,7 @@ const runStart = () => {
 	logger(`info`, `스크립트 실행: ${TITLE}`);
 	logger(`info`, `전달된 인자 1 : ${args1 || 'none'}`);
 	logger(`info`, `전달된 인자 2 : ${args2 || 'none'}`);
+	logger(`info`, `전달된 인자 3 : ${args3 || 'none'}`);
 
 	try {
 		args2 === `compile` && runCompile();
