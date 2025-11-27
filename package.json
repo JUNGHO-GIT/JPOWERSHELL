@@ -5,16 +5,21 @@
   "publisher": "JUNGHO",
   "license": "Apache-2.0",
   "main": "index.js",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "repository": {
     "type": "git",
     "url": "https://github.com/JUNGHO-GIT/POWERSHELL.git"
   },
   "scripts": {
-    "watch": "bun .node/swc.cjs --bun --watch",
-    "compile": "bun .node/swc.cjs --bun --compile",
-    "reset": "bun .node/reset.cjs --bun --reset",
+    "start-client": "bun .node/swc.cjs --bun --start --client",
+    "start-server": "bun .node/swc.cjs --bun --start --server",
+    "build-client": "bun .node/swc.cjs --bun --build --client",
+    "build-server": "bun .node/swc.cjs --bun --build --server",
+    "git-fetch": "bun .node/git.cjs --bun --fetch",
+    "git-push": "bun .node/git.cjs --bun --push",
     "fix": "bun .node/fix.cjs --bun --fix",
-    "git": "bun .node/git.cjs --bun --push"
+    "reset": "bun .node/reset.cjs --bun --reset",
+    "vsce": "bun .node/vsce.cjs --bun --package",
+    "gcloud": "bun .node/gcloud.cjs --bun --deploy"
   }
 }
