@@ -7,10 +7,10 @@
 * linguist-detectable=true
 
 # linguist-vendored
-**/libs/** linguist-vendored=true
-**/fonts/** linguist-vendored=true
-**/image/** linguist-vendored=true
-**/types/** linguist-vendored=true
-**/node_modules/** linguist-vendored=true
-**/vendor/** linguist-vendored=true
-**/.node/** linguist-vendored=true
+**/libs/** linguist-detectable=false
+**/fonts/** linguist-detectable=false
+**/image/** linguist-detectable=false
+**/types/** linguist-detectable=false
+**/node_modules/** linguist-detectable=false
+**/vendor/** linguist-detectable=false
+**/.node/** linguist-detectable=false
