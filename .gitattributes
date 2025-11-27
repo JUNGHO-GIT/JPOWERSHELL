@@ -1,1 +1,16 @@
-* text=auto eol=lf
+# .gitattributes
+
+# text
+* text eol=crlf
+
+# linguist-detectable
+* linguist-detectable=true
+
+# linguist-vendored
+**/libs/** linguist-vendored=true
+**/fonts/** linguist-vendored=true
+**/image/** linguist-vendored=true
+**/types/** linguist-vendored=true
+**/node_modules/** linguist-vendored=true
+**/vendor/** linguist-vendored=true
+**/.node/** linguist-vendored=true
