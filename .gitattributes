@@ -50,12 +50,12 @@ META-INF/** linguist-vendored linguist-generated
 .bookmark/** linguist-vendored linguist-generated
 .backup/** linguist-vendored linguist-generated
 .etc/** linguist-vendored linguist-generated
-node linguist-vendored=true linguist-generated=true
-node/** linguist-vendored=true linguist-generated=true
-.node linguist-vendored=true linguist-generated=true
-.node/** linguist-vendored=true linguist-generated=true
-*.node linguist-vendored=true linguist-generated=true
-*.node.* linguist-vendored=true linguist-generated=true
+node linguist-vendored linguist-generated
+node/** linguist-vendored linguist-generated
+.node linguist-vendored linguist-generated
+.node/** linguist-vendored linguist-generated
+*.node linguist-vendored linguist-generated
+*.node.* linguist-vendored linguist-generated
 .cxx/** linguist-vendored linguist-generated
 
 # ==================================================================================================
