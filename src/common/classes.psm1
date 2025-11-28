@@ -36,24 +36,36 @@ class T {
 		exit
 	}
 
+	## 계속 여부 확인
+	static [bool] PrintContinue(
+		[string]$scriptPath = ""
+	) {
+		[T]::PrintEmpty()
+		Write-Host "종료하려면 'exit', 계속하려면 Enter를 누르세요..." -ForegroundColor Green
+		$inputs = Read-Host "- "
+
+		$result = $inputs -ne "exit"
+		$shouldRerun = $result -and $inputs -eq "" -and $scriptPath -and (Test-Path $scriptPath)
+		$shouldRerun && (. $scriptPath)
+
+		return $result
+	}
+
 	## 텍스트 포맷
 	static [string] TextFormat(
 		[string]$str = "",
 		[int]$target = 50
 	) {
-		$str = "$str"
 		$width = 0
 		$result = ""
 		foreach ($ch in $str.ToCharArray()) {
-			$len = ([System.Text.Encoding]::GetEncoding("euc-kr").GetByteCount($ch))
-			if ($width + $len -gt $target) {
-				break
-			}
+			$len = [System.Text.Encoding]::GetEncoding("euc-kr").GetByteCount($ch)
+			($width + $len -gt $target) && (break)
 			$result += $ch
 			$width += $len
 		}
 		$pad = $target - $width
-		$pad -gt 0 && ($result += (" " * $pad))
+		($pad -gt 0) && ($result += " " * $pad)
 		return $result
 	}
 

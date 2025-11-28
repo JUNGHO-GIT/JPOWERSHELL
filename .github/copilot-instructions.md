@@ -1,27 +1,23 @@
 # 1. CORE PRINCIPLES
 
 # 1-1. Response Principles
-- Detailed, objective, professional responses
+- Detailed, objective, professional rsponses
 - Capture core intent, not literal interpretation
 - Never fabricate; acknowledge errors immediately
-- When in 'Agent' mode, jsconfig or tsconfig errors are ignored.
 
 # 1-2. Coding Philosophy
 - PerformanceFirst: minimize memory waste/leaks
 - Readability: clear variable names (no extreme abbreviations)
-- Maintainability: flat structure, avoid deep nesting
+- Maintainability: flat sucture, avoid deep nesting
 - FunctionOrganization: group by logical flow, not micro-tasks
 - StyleGuide: no spaghetti (max 4-level indentation)
 
 # 1-3. MANDATORY Code Modification Protocol
-**NOTE: Ternary and IIFE preferences apply primarily to JavaScript/TypeScript. For other languages (Java, Python, etc.), follow language-specific idiomatic conventions.**
-
-- ALWAYS PREFER `ternary` or `IIFE` over if-else (JS/TS)
+- ALWAYS PREFER `ternary` or `IIFE` over if-else
 - ALWAYS send `code format` for copy-paste
 - ALWAYS return `MODIFIED code` ONLY
 - ALWAYS exactly ONE SPACE around "=" or ":"
-- EXCEPTION NO SPACE in parameter default values (e.g., `function f(a=1)`, `(a=1) => {}`)
-- NEVER modify comments (preserve `// -----------`)
+- NEVER modify comments (prserve `// -----------`)
 - NEVER break line before semicolon
 - NEVER mid-function return; assign variable, return at end only
 
@@ -37,19 +33,19 @@
 # 2. FORMATTING EXAMPLES
 
 # 2-1. TERNARY CHAINS
-- Wrap each condition/result in parentheses on separate lines
+- Wrap each condition/rsult in parentheses on separate lines
 **INCORRECT:**
 ```javascript
-(!s || s === "p1") ? f() : (s === "p2") ? f(s, "yy") : f(s);
+(!s || s === "p1") ? fn() : (s === "p2") ? fn(s, "yy") : fn(s);
 ```
 **CORRECT:**
 ```javascript
 !s || s === `p1` ? (
-  f()
+  fn()
 ) : s === `p2` ? (
-  f(s, "yy")
+  fn(s, "yy")
 ) : (
-  f(s)
+  fn(s)
 )
 ```
 
@@ -84,14 +80,14 @@ return rs;
 ```
 
 # 2-3. IF/ELSE & TRY/CATCH
-- ALWAYS PREFER ternary/IIFE over if-else (JS/TS)
+- ALWAYS PREFER ternary/IIFE over if-else
 - ALL if/else/try/catch MUST use braces with line breaks
 - Closing brace and else/catch on SEPARATE lines: `}\nelse {`
 **INCORRECT:**
 ```javascript
 if (p1) return rs;
 if (p2) {
-} else { f(e); }
+} else { fn(e); }
 ```
 **CORRECT:**
 ```javascript
@@ -99,12 +95,12 @@ if (p1) {
   return rs;
 }
 else {
-  f(e);
+  fn(e);
 }
 try {
-  f1();
+  fn1();
 }
 catch (Exception e) {
-  f2();
+  fn2();
 }
 ```
