@@ -477,7 +477,5 @@ class M {
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------
 & {
-	[T]::PrintLine("Green")
-	[T]::PrintText("Green", "✓ 작업 디렉터리: [$global:workspaceDir]")
-	[T]::PrintExit("Green", "✓ 모든 작업이 정상적으로 완료되었습니다.")
+	[T]::PrintContinue($PSCommandPath)
 }

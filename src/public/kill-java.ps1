@@ -39,6 +39,5 @@ $global:javaProcesses = Get-Process java -ErrorAction SilentlyContinue
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------
 & {
-	[T]::PrintLine("Green")
-	[T]::PrintExit("Green", "✓ 모든 작업이 정상적으로 완료되었습니다.")
+	[T]::PrintContinue($PSCommandPath)
 }
