@@ -1,39 +1,32 @@
-﻿# run-envbackup.ps1
+# template.ps1
+
+# - 해당 파일의 기본 구조나 형식을 따릅니다.
+# - 특히 'T' 클래스는 수정하지 않고 그대로 사용합니다.
+# - 기존코드의 주석은 유지합니다.
+# 2.메인, 3.프로세스 시작, 4.메인 로직 실행, 99.프로세스 종료 형식을 반드시 지킵니다.
 
 # 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
-using module ..\common\classes.psm1
+# - 공통으로 사용되는 클래스를 import 합니다.
+using module ..\lib\classes.psm1
 
 # 0. 전역변수 설정 ---------------------------------------------------------------------------
+# - 공통적으로 쓰이는 전역변수를 정의합니다.
+# - 파일이름, 파일경로 ..., 레지스트리 경로, ... 등은 왠만하면 전역변수로 정의합니다.
 $global:line = "────────────────────────────────────────────────────────────────"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
-$global:outputPath = "C:\Users\jungh\Downloads\env_variables.txt"
 
 # 2. 메인 ----------------------------------------------------------------------------------------
+# - 역할에 따라서 메서드를 구분하여 작성합니다.
+# - 작성한 메서드는 M 클래스 내부에서 호출지말고 메인 로직 실행 부분에서 호출합니다.
+# - 따라서 메서드 간의 의존성을 최소화합니다.
+# - M 클래스 내부에서는 [T] 클래스 메서드들을 자유롭게 호출할 수 있습니다.!!
 class M {
 	static [void] Run1() {
-		try {
-			[T]::PrintLine("Yellow")
-			[T]::PrintText("Yellow", "▶ 환경변수 백업 시작")
-
-			# 기존 파일이 있으면 삭제
-			if (Test-Path $global:outputPath) {
-				Remove-Item $global:outputPath
-			}
-
-			# 환경변수를 파일에 저장
-			Get-ChildItem Env: | ForEach-Object {
-				"$($_.Name)=$($_.Value)" | Out-File -FilePath $global:outputPath -Append -Encoding UTF8
-			}
-
-			[T]::PrintLine("Green")
-			[T]::PrintText("Green", "✓ 환경변수들이 $global:outputPath 에 저장되었습니다.")
-		}
-		catch {
-			[T]::PrintLine("Red")
-			[T]::PrintText("Red", "! 환경변수 백업 중 오류가 발생했습니다: $($_.Exception.Message)")
-			[T]::PrintExit("Red", "! 프로세스를 종료합니다.")
-		}
+	}
+	static [void] Run2() {
+	}
+	static [void] Run3() {
 	}
 }
 
@@ -47,6 +40,8 @@ class M {
 # 4. 메인 로직 실행 ---------------------------------------------------------------------------
 & {
 	[M]::Run1()
+	[M]::Run2()
+	[M]::Run3()
 }
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------
