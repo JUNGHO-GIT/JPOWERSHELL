@@ -7,7 +7,7 @@ using module ..\common\classes.psm1
 $global:line = "────────────────────────────────────────────────────────────────"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
-$global:rootPath = "C:\JUNGHO\2.IDE\2.Vscode\Workspace\2.Project\1.Node"
+$global:rootPath = "C:\JUNGHO\5.Ide\0.Vscode\Workspace\2.Project\1.Node"
 $global:stack = New-Object System.Collections.Generic.Stack[System.IO.DirectoryInfo]
 
 # 2. 메인 ----------------------------------------------------------------------------------------

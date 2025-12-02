@@ -1,1 +1,0 @@
-C:/JUNGHO/0.Registry/0.Link/project/.node/reset.cjs

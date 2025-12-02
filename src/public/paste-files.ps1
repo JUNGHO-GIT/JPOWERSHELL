@@ -1,4 +1,4 @@
-# run-removefiles.ps1
+# run-pastefiles.ps1
 
 # 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
 using module ..\common\classes.psm1
@@ -10,8 +10,8 @@ $global:fileName = Split-Path -Leaf $PSCommandPath
 $global:rootPath = "C:\JUNGHO\5.Ide\0.Vscode\Workspace\2.Project"
 $global:ignoreFolders = @("node_modules", "bin", "target", "build", "out", "dist", ".gradle", ".idea", ".git", ".history")
 $global:projectMarkers = @("package.json", "pom.xml", "build.gradle")
-
-$global:deleteTargets = @()
+$global:sourceFolder = ""
+$global:sourceFiles = @()
 $global:selectedRoots = @()
 $global:commonPath = ""
 $global:allProjects = @()
@@ -54,31 +54,81 @@ class M {
 		return $projects
 	}
 
-	## 삭제 대상 입력
-	static [void] InputDeleteTargets() {
+	## 소스 폴더 선택
+	static [void] Run1() {
 		[T]::PrintLine("Yellow")
-		[T]::PrintText("Yellow", "▶ 삭제할 파일/폴더명을 입력하세요")
-		[T]::PrintText("DarkGray", "- 쉼표로 구분하여 다중 입력 가능")
-		[T]::PrintText("DarkGray", "- 예: gitignore, .node, temp.txt")
+		[T]::PrintText("Yellow", "▶ 소스 폴더를 선택하세요 (rootPath 기준)")
+		[T]::PrintText("DarkGray", "- rootPath: $global:rootPath")
+		[T]::PrintEmpty()
+
+		$folders = Get-ChildItem -Path $global:rootPath -Directory -Force -ErrorAction SilentlyContinue | Sort-Object Name
+		if ($folders.Count -eq 0) {
+			[T]::PrintExit("Red", "! rootPath에 폴더가 없습니다.")
+		}
+
+		for ($i = 0; $i -lt $folders.Count; $i++) {
+			[T]::PrintText("White", "- $($i + 1): $($folders[$i].Name)")
+		}
 		[T]::PrintEmpty()
 
 		$inputs = ""
-		[T]::TextInput("Yellow", "▶ 삭제 대상:", ([ref]$inputs))
+		[T]::TextInput("Yellow", "▶ 폴더 선택:", ([ref]$inputs))
 
-		$targets = $inputs -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
-
-		foreach ($target in $targets) {
-			$global:deleteTargets += $target
-			[T]::PrintText("Green", "✓ 추가됨: $target")
+		$idx = $inputs.Trim()
+		$valid = $idx -match "^\d+$" -and [int]$idx -ge 1 -and [int]$idx -le $folders.Count
+		if (-not $valid) {
+			[T]::PrintExit("Red", "! 잘못된 선택입니다.")
 		}
 
-		if ($global:deleteTargets.Count -eq 0) {
-			[T]::PrintExit("Red", "! 최소 1개 이상의 삭제 대상이 필요합니다.")
+		$global:sourceFolder = $folders[[int]$idx - 1].FullName
+		[T]::PrintText("Green", "✓ 소스 폴더: $global:sourceFolder")
+	}
+
+	## 소스 파일 선택
+	static [void] Run2() {
+		[T]::PrintLine("Yellow")
+		[T]::PrintText("Yellow", "▶ 복사할 파일을 선택하세요")
+		[T]::PrintEmpty()
+
+		$files = Get-ChildItem -Path $global:sourceFolder -File -Force -ErrorAction SilentlyContinue
+		if ($files.Count -eq 0) {
+			[T]::PrintExit("Red", "! 폴더에 파일이 없습니다: $global:sourceFolder")
+		}
+
+		for ($i = 0; $i -lt $files.Count; $i++) {
+			[T]::PrintText("White", "- $($i + 1): $($files[$i].Name)")
+		}
+		[T]::PrintEmpty()
+
+		$inputs = ""
+		[T]::TextInput("Yellow", "▶ 파일 선택 (쉼표로 구분, 예: 1,2,3 / all=전체):", ([ref]$inputs))
+
+		if ($inputs.Trim().ToLower() -eq "all") {
+			foreach ($file in $files) {
+				$global:sourceFiles += $file.Name
+				[T]::PrintText("Green", "✓ 선택됨: $($file.Name)")
+			}
+		}
+		else {
+			$indices = $inputs -split "," | ForEach-Object { $_.Trim() }
+			foreach ($idx in $indices) {
+				if ($idx -match "^\d+$" -and [int]$idx -ge 1 -and [int]$idx -le $files.Count) {
+					$global:sourceFiles += $files[[int]$idx - 1].Name
+					[T]::PrintText("Green", "✓ 선택됨: $($files[[int]$idx - 1].Name)")
+				}
+				else {
+					[T]::PrintText("Red", "! 잘못된 선택: $idx")
+				}
+			}
+		}
+
+		if ($global:sourceFiles.Count -eq 0) {
+			[T]::PrintExit("Red", "! 최소 1개 이상의 파일을 선택해야 합니다.")
 		}
 	}
 
 	## 대상 루트 경로 선택
-	static [void] SelectTargetRoots() {
+	static [void] Run3() {
 		[T]::PrintLine("Yellow")
 		[T]::PrintText("Yellow", "▶ 대상 루트 경로를 선택하세요 (다중 선택 가능)")
 		[T]::PrintEmpty()
@@ -114,11 +164,11 @@ class M {
 	}
 
 	## 공통 대상 경로 입력
-	static [void] InputCommonPath() {
+	static [void] Run4() {
 		[T]::PrintLine("Yellow")
 		[T]::PrintText("Yellow", "▶ 프로젝트 폴더 내 공통 대상 경로를 입력하세요")
 		[T]::PrintText("DarkGray", "- 예: .node, src/config, client/.node")
-		[T]::PrintText("DarkGray", "- 빈 입력 = 프로젝트 루트에서 삭제")
+		[T]::PrintText("DarkGray", "- 빈 입력 = 프로젝트 루트에 복사")
 		[T]::PrintEmpty()
 
 		$inputs = ""
@@ -126,7 +176,7 @@ class M {
 
 		$global:commonPath = $inputs.Trim()
 		if ($global:commonPath -eq "") {
-			[T]::PrintText("DarkGray", "- 프로젝트 루트에서 삭제합니다.")
+			[T]::PrintText("DarkGray", "- 프로젝트 루트에 복사합니다.")
 		}
 		else {
 			[T]::PrintText("Green", "✓ 공통 경로: $global:commonPath")
@@ -134,7 +184,7 @@ class M {
 	}
 
 	## 제외할 프로젝트 선택
-	static [void] SelectExcludeProjects() {
+	static [void] Run5() {
 		[T]::PrintLine("Yellow")
 		[T]::PrintText("Yellow", "▶ 발견된 프로젝트 목록")
 		[T]::PrintEmpty()
@@ -189,32 +239,19 @@ class M {
 		[T]::PrintText("Green", "✓ 포함될 프로젝트: $includeCount 개")
 	}
 
-	## 삭제 확인
-	static [bool] ConfirmDelete() {
-		[T]::PrintLine("Red")
-		[T]::PrintText("Red", "▶ 삭제 작업 확인")
-		[T]::PrintText("White", "- 삭제 대상: $($global:deleteTargets -join ', ')")
+	## 파일 복사 실행
+	static [void] Run6() {
+		[T]::PrintLine("Cyan")
+		[T]::PrintText("Cyan", "▶ 작업 요약")
+		[T]::PrintText("White", "- 소스: $global:sourceFolder")
+		[T]::PrintText("White", "- 파일: $($global:sourceFiles -join ', ')")
 		[T]::PrintText("White", "- 대상 루트: $($global:selectedRoots -join ', ')")
 		[T]::PrintText("White", "- 공통 경로: $($global:commonPath -eq '' ? '(프로젝트 루트)' : $global:commonPath)")
 		[T]::PrintText("White", "- 제외 프로젝트: $($global:excludedProjects.Count)개")
 		[T]::PrintEmpty()
-		[T]::PrintText("Red", "! 이 작업은 되돌릴 수 없습니다.")
-		[T]::PrintEmpty()
 
-		$inputs = ""
-		[T]::TextInput("Red", "▶ 계속하시겠습니까? (y/n):", ([ref]$inputs))
-
-		return $inputs.Trim().ToLower() -eq "y"
-	}
-
-	## 삭제 실행
-	static [void] ExecuteDelete() {
-		[T]::PrintLine("Cyan")
-		[T]::PrintText("Cyan", "▶ 삭제 작업 시작")
-		[T]::PrintEmpty()
-
-		$totalDeleted = 0
-		$totalFailed = 0
+		$totalSuccess = 0
+		$totalFail = 0
 		$totalSkipped = 0
 
 		foreach ($root in $global:selectedRoots) {
@@ -225,8 +262,8 @@ class M {
 			[T]::PrintText("White", "▶ 발견된 프로젝트: $($projects.Count)개")
 			[T]::PrintEmpty()
 
-			$deleted = 0
-			$failed = 0
+			$success = 0
+			$fail = 0
 			$skipped = 0
 
 			foreach ($project in $projects) {
@@ -241,40 +278,43 @@ class M {
 				$targetDir = $global:commonPath -eq "" ? $project : (Join-Path $project $global:commonPath)
 
 				if (-not (Test-Path $targetDir)) {
+					[T]::PrintText("DarkGray", "- 경로 없음: $targetDir")
 					continue
 				}
 
-				$hasDeleted = $false
+				[T]::PrintText("White", "- 복사 중: $targetDir")
+				$copied = 0
 
-				foreach ($target in $global:deleteTargets) {
-					$targetPath = Join-Path $targetDir $target
+				foreach ($fileName in $global:sourceFiles) {
+					$sourcePath = Join-Path $global:sourceFolder $fileName
+					$destPath = Join-Path $targetDir $fileName
 
-					if (Test-Path $targetPath) {
-						try {
-							$item = Get-Item -Path $targetPath -Force
-							$isDir = $item.PSIsContainer
-
-							Remove-Item -Path $targetPath -Recurse -Force
-							[T]::PrintText("Green", "✓ 삭제: $targetPath")
-							$deleted++
-							$hasDeleted = $true
-						}
-						catch {
-							[T]::PrintText("Red", "! 실패: $targetPath - $($_.Exception.Message)")
-							$failed++
-						}
+					try {
+						Copy-Item -Path $sourcePath -Destination $destPath -Force
+						[T]::PrintText("Green", "  ✓ $fileName")
+						$copied++
 					}
+					catch {
+						[T]::PrintText("Red", "  ! $fileName - $($_.Exception.Message)")
+					}
+				}
+
+				if ($copied -gt 0) {
+					$success++
+				}
+				else {
+					$fail++
 				}
 			}
 
-			[T]::PrintText("Green", "✓ 완료 - 삭제: $deleted | 실패: $failed | 건너뜀: $skipped")
-			$totalDeleted += $deleted
-			$totalFailed += $failed
+			[T]::PrintText("Green", "✓ 완료 - 성공: $success | 실패: $fail | 건너뜀: $skipped")
+			$totalSuccess += $success
+			$totalFail += $fail
 			$totalSkipped += $skipped
 		}
 
 		[T]::PrintLine("Green")
-		[T]::PrintText("Green", "▶ 전체 삭제 완료 - 삭제: $totalDeleted | 실패: $totalFailed | 건너뜀: $totalSkipped")
+		[T]::PrintText("Green", "▶ 전체 복사 완료 - 성공: $totalSuccess | 실패: $totalFail | 건너뜀: $totalSkipped")
 	}
 }
 
@@ -287,19 +327,12 @@ class M {
 
 # 4. 메인 로직 실행 ---------------------------------------------------------------------------
 & {
-	[M]::InputDeleteTargets()
-	[M]::SelectTargetRoots()
-	[M]::InputCommonPath()
-	[M]::SelectExcludeProjects()
-
-	$confirmed = [M]::ConfirmDelete()
-	if ($confirmed) {
-		[M]::ExecuteDelete()
-	}
-	else {
-		[T]::PrintLine("Yellow")
-		[T]::PrintText("Yellow", "▶ 삭제 작업이 취소되었습니다.")
-	}
+	[M]::Run1()
+	[M]::Run2()
+	[M]::Run3()
+	[M]::Run4()
+	[M]::Run5()
+	[M]::Run6()
 }
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@ $global:cloneType = ""
 class M {
 
 	# 2-1. 복제 정보 입력 -------------------------------------------------------------------
-	static [void] InputCloneInfo() {
+	static [void] Run1() {
 		[T]::PrintLine("Yellow")
 		[T]::PrintText("Yellow", "▶ 복제 대상 정보를 입력합니다.")
 
@@ -80,7 +80,7 @@ class M {
 	}
 
 	# 2-2. 경로 유효성 검사 ---------------------------------------------------------------------
-	static [void] ValidatePaths() {
+	static [void] Run2() {
 		[T]::PrintLine("Yellow")
 		[T]::PrintText("Yellow", "▶ 경로 유효성 검사를 수행합니다.")
 
@@ -144,7 +144,7 @@ class M {
 	}
 
 	# 2-3. 심볼릭 링크 생성 ---------------------------------------------------------------------------
-	static [void] CreateSymbolicLink() {
+	static [void] Run3() {
 		[T]::PrintLine("Yellow")
 		[T]::PrintText("Yellow", "▶ 심볼릭 링크(또는 정션) 생성 작업을 시작합니다.")
 
@@ -180,9 +180,9 @@ class M {
 
 # 4. 메인 로직 실행 ---------------------------------------------------------------------------
 & {
-	[M]::InputCloneInfo()
-	[M]::ValidatePaths()
-	[M]::CreateSymbolicLink()
+	[M]::Run1()
+	[M]::Run2()
+	[M]::Run3()
 }
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------
