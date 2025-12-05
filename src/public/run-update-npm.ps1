@@ -85,6 +85,65 @@ class M {
 			[T]::PrintText("Yellow", "- Warning: unable to enumerate children of $($dirFullName): $($_.Exception.Message)")
 		}
 	}
+
+	static [void] Run1() {
+		[T]::PrintLine("Yellow")
+		[M]::InitializeStack()
+	}
+
+	static [void] Run2() {
+		while ($global:stack.Count -gt 0) {
+			$dir = $global:stack.Pop()
+			if (!$dir -or !$dir.Exists) {
+				continue
+			}
+			else {
+				$pkg = Join-Path $dir.FullName "package.json"
+				if (Test-Path $pkg) {
+					$pm = [M]::GetPackageManagerFromReset($pkg)
+					[T]::PrintLine("Cyan")
+					[T]::PrintText("Cyan", "▶ Processing directory: $($dir.FullName)")
+					[T]::PrintText("Cyan", "▶ Package Manager: [$pm]")
+					Push-Location $dir.FullName
+					try {
+						[M]::UpdatePackageJson($pm)
+						[M]::InstallDependencies($pm)
+						[M]::RunResetScript($pm)
+						[T]::PrintText("Green", "✓ Successfully updated & reset in $($dir.FullName)")
+						# 클라이언트 폴더가 있는지 확인하고 처리
+						$clientPath = Join-Path $dir.FullName "client"
+						$clientPkg = Join-Path $clientPath "package.json"
+						if (Test-Path $clientPkg) {
+							$clientPm = [M]::GetPackageManagerFromReset($clientPkg)
+							[T]::PrintText("Cyan", "- Found client folder, processing...")
+							[T]::PrintText("Cyan", "- Client Package Manager: [$clientPm]")
+							Push-Location $clientPath
+							try {
+								[M]::UpdatePackageJson($clientPm)
+								[M]::InstallDependencies($clientPm)
+								[M]::RunResetScript($clientPm)
+								[T]::PrintText("Green", "✓ Successfully updated & reset in client folder")
+							}
+							catch {
+								[T]::PrintText("Red", "! Error in client folder: $($_.Exception.Message)")
+							}
+							finally {
+								Pop-Location
+							}
+						}
+						[T]::PrintEmpty()
+					}
+					catch {
+						[T]::PrintText("Red", "! Error in $($dir.FullName): $($_.Exception.Message)")
+					}
+					finally {
+						Pop-Location
+					}
+				}
+				[M]::AddChildDirectories($dir.FullName)
+			}
+		}
+	}
 }
 
 # 3. 프로세스 시작 --------------------------------------------------------------------------------
@@ -92,64 +151,12 @@ class M {
 	[T]::PrintLine("Cyan")
 	[T]::PrintText("Cyan", "▶ 파일 이름: [$global:fileName]")
 	[T]::PrintText("Cyan", "▶ 현재 시간: [$global:currentTime]")
-	[T]::PrintText("Cyan", "▶ 루트 경로: [$global:rootPath]")
 }
 
 # 4. 메인 로직 실행 ---------------------------------------------------------------------------
 & {
-	[T]::PrintLine("Yellow")
-	[M]::InitializeStack()
-	while ($global:stack.Count -gt 0) {
-		$dir = $global:stack.Pop()
-		if (!$dir -or !$dir.Exists) {
-			continue
-		}
-		else {
-			$pkg = Join-Path $dir.FullName "package.json"
-			if (Test-Path $pkg) {
-				$pm = [M]::GetPackageManagerFromReset($pkg)
-				[T]::PrintLine("Cyan")
-				[T]::PrintText("Cyan", "▶ Processing directory: $($dir.FullName)")
-				[T]::PrintText("Cyan", "▶ Package Manager: [$pm]")
-				Push-Location $dir.FullName
-				try {
-					[M]::UpdatePackageJson($pm)
-					[M]::InstallDependencies($pm)
-					[M]::RunResetScript($pm)
-					[T]::PrintText("Green", "✓ Successfully updated & reset in $($dir.FullName)")
-					# 클라이언트 폴더가 있는지 확인하고 처리
-					$clientPath = Join-Path $dir.FullName "client"
-					$clientPkg = Join-Path $clientPath "package.json"
-					if (Test-Path $clientPkg) {
-						$clientPm = [M]::GetPackageManagerFromReset($clientPkg)
-						[T]::PrintText("Cyan", "- Found client folder, processing...")
-						[T]::PrintText("Cyan", "- Client Package Manager: [$clientPm]")
-						Push-Location $clientPath
-						try {
-							[M]::UpdatePackageJson($clientPm)
-							[M]::InstallDependencies($clientPm)
-							[M]::RunResetScript($clientPm)
-							[T]::PrintText("Green", "✓ Successfully updated & reset in client folder")
-						}
-						catch {
-							[T]::PrintText("Red", "! Error in client folder: $($_.Exception.Message)")
-						}
-						finally {
-							Pop-Location
-						}
-					}
-					[T]::PrintEmpty()
-				}
-				catch {
-					[T]::PrintText("Red", "! Error in $($dir.FullName): $($_.Exception.Message)")
-				}
-				finally {
-					Pop-Location
-				}
-			}
-			[M]::AddChildDirectories($dir.FullName)
-		}
-	}
+	[M]::Run1()
+	[M]::Run2()
 }
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------

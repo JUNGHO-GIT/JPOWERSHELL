@@ -7,7 +7,6 @@ using module ..\lib\classes.psm1
 $global:line = "────────────────────────────────────────────────────────────────"
 $global:currentTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $global:fileName = Split-Path -Leaf $PSCommandPath
-
 $global:sourcePath = ""
 $global:targetPath = ""
 $global:isDirectory = $false

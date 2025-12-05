@@ -14,7 +14,7 @@ $global:englishFolders = @('Desktop','Documents','Downloads','Pictures','Music',
 # 2. 메인 ----------------------------------------------------------------------------------------
 class M {
 	## 관리자 권한 확인
-	static [void] CheckAdmin() {
+	static [void] Run1() {
 		$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 		if (-not $isAdmin) {
 			[T]::PrintExit("Red", "! 관리자 권한으로 실행해주세요.")
@@ -23,7 +23,7 @@ class M {
 	}
 
 	## 작업 공간 생성
-	static [void] CreateWorkspace() {
+	static [void] Run2() {
 		$downloadsPath = Join-Path $env:USERPROFILE 'Downloads'
 		if (-not (Test-Path -LiteralPath $downloadsPath)) {
 			New-Item -ItemType Directory -Path $downloadsPath | Out-Null
@@ -54,7 +54,7 @@ class M {
 	}
 
 	## OneDrive 프로세스 종료
-	static [void] StopProcesses() {
+	static [void] Run3() {
 		$processNames = @('OneDrive','OneDriveStandaloneUpdater','OneDriveSetup','FileCoAuth')
 		foreach ($name in $processNames) {
 			Get-Process -Name $name -ErrorAction SilentlyContinue | ForEach-Object {
@@ -70,7 +70,7 @@ class M {
 	}
 
 	## OneDrive 설치 제거
-	static [void] UninstallOneDrive() {
+	static [void] Run4() {
 		foreach ($path in @("$env:SystemRoot\System32\OneDriveSetup.exe","$env:SystemRoot\SysWOW64\OneDriveSetup.exe")) {
 			if (Test-Path -LiteralPath $path) {
 				try {
@@ -113,7 +113,7 @@ class M {
 	}
 
 	## 예약 작업 제거
-	static [void] RemoveScheduledTasks() {
+	static [void] Run5() {
 		$all = Get-ScheduledTask -ErrorAction SilentlyContinue
 		$targets = $all | Where-Object { $_.TaskName -like "*OneDrive*" -or $_.TaskPath -like "*OneDrive*" }
 		foreach ($task in $targets) {
@@ -128,7 +128,7 @@ class M {
 	}
 
 	## OneDrive 폴더 삭제
-	static [void] RemoveFolders() {
+	static [void] Run6() {
 		$commonPaths = @(
 			"$env:ProgramData\Microsoft OneDrive",
 			"$env:ProgramData\Microsoft\OneDrive",
@@ -186,7 +186,7 @@ class M {
 	}
 
 	## 레지스트리 정리
-	static [void] CleanRegistry() {
+	static [void] Run7() {
 		$clsidOneDrive = '{018D5C66-4533-4307-9B53-224DE2ED1FE6}'
 		$skyDriveKF = '{A52BBA46-E9E1-435f-B3D9-28DAA648C0F6}'
 
@@ -244,7 +244,7 @@ class M {
 	}
 
 	## 표준 폴더 경로 복구
-	static [void] RepairFolderPaths() {
+	static [void] Run8() {
 		$pf = $env:USERPROFILE
 		$USF = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
 		$SF = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders'
@@ -310,7 +310,7 @@ class M {
 	}
 
 	## 영어 표시 적용
-	static [void] ApplyEnglishNames() {
+	static [void] Run9() {
 		$map = @{
 			'Desktop' = 'Desktop'
 			'Documents' = 'Documents'
@@ -348,7 +348,7 @@ class M {
 	}
 
 	## 권한 정합화 및 캐시 갱신
-	static [void] FixPermissions() {
+	static [void] Run10() {
 		$pf = $env:USERPROFILE
 		$who = "$env:USERNAME"
 		foreach ($name in $global:englishFolders) {
@@ -379,7 +379,7 @@ class M {
 	}
 
 	## UI 언어 복구
-	static [void] RevertUILanguage() {
+	static [void] Run11() {
 		$intlKey = 'HKCU:\Control Panel\International'
 		if (Test-Path $intlKey) {
 			try {
@@ -400,19 +400,6 @@ class M {
 
 		[T]::PrintText("Green", "✓ UI 언어 복구 완료")
 	}
-
-	## Explorer 재시작
-	static [void] RestartExplorer() {
-		try {
-			Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
-			Start-Sleep -Seconds 2
-			Start-Process explorer.exe
-			[T]::PrintText("Green", "✓ Explorer 재시작 완료")
-		}
-		catch {
-			[T]::PrintText("Yellow", "- Explorer 재시작 실패")
-		}
-	}
 }
 
 # 3. 프로세스 시작 --------------------------------------------------------------------------------
@@ -424,55 +411,17 @@ class M {
 
 # 4. 메인 로직 실행 ---------------------------------------------------------------------------
 & {
-	[M]::CheckAdmin()
-	[T]::PrintLine("Cyan")
-
-	[M]::CreateWorkspace()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ OneDrive 프로세스 종료 중...")
-	[M]::StopProcesses()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ OneDrive 설치 제거 중...")
-	[M]::UninstallOneDrive()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ 예약 작업 제거 중...")
-	[M]::RemoveScheduledTasks()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ OneDrive 폴더 삭제 중...")
-	[M]::RemoveFolders()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ 레지스트리 정리 중...")
-	[M]::CleanRegistry()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ 표준 폴더 경로 복구 중...")
-	[M]::RepairFolderPaths()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ 영어 표시 적용 중...")
-	[M]::ApplyEnglishNames()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ 권한 정합화 및 캐시 갱신 중...")
-	[M]::FixPermissions()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ UI 언어 복구 중...")
-	[M]::RevertUILanguage()
-	[T]::PrintLine("Yellow")
-
-	[T]::PrintText("Cyan", "▶ Explorer 재시작 중...")
-	[M]::RestartExplorer()
-
-	try {
-		Stop-Transcript | Out-Null
-	}
-	catch {}
+	[M]::Run1()
+	[M]::Run2()
+	[M]::Run3()
+	[M]::Run4()
+	[M]::Run5()
+	[M]::Run6()
+	[M]::Run7()
+	[M]::Run8()
+	[M]::Run9()
+	[M]::Run10()
+	[M]::Run11()
 }
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------

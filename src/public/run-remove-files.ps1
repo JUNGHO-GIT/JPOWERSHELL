@@ -10,7 +10,6 @@ $global:fileName = Split-Path -Leaf $PSCommandPath
 $global:rootPath = "C:\JUNGHO\5.Ide\0.Vscode\Workspace\2.Project"
 $global:ignoreFolders = @("node_modules", "bin", "target", "build", "out", "dist", ".gradle", ".idea", ".git", ".history")
 $global:projectMarkers = @("package.json", "pom.xml", "build.gradle")
-
 $global:deleteTargets = @()
 $global:selectedRoots = @()
 $global:commonPath = ""
@@ -52,6 +51,88 @@ class M {
 		}
 
 		return $projects
+	}
+
+	## 삭제 확인
+	static [bool] ConfirmDelete() {
+		[T]::PrintLine("Red")
+		[T]::PrintText("Red", "▶ 삭제 작업 확인")
+		[T]::PrintText("White", "- 삭제 대상: $($global:deleteTargets -join ', ')")
+		[T]::PrintText("White", "- 대상 루트: $($global:selectedRoots -join ', ')")
+		[T]::PrintText("White", "- 공통 경로: $($global:commonPath -eq '' ? '(프로젝트 루트)' : $global:commonPath)")
+		[T]::PrintText("White", "- 제외 프로젝트: $($global:excludedProjects.Count)개")
+		[T]::PrintEmpty()
+		[T]::PrintText("Red", "! 이 작업은 되돌릴 수 없습니다.")
+		[T]::PrintEmpty()
+
+		$inputs = ""
+		[T]::TextInput("Red", "▶ 계속하시겠습니까? (y/n):", ([ref]$inputs))
+
+		return $inputs.Trim().ToLower() -eq "y"
+	}
+
+	## 삭제 실행
+	static [void] ExecuteDelete() {
+		[T]::PrintLine("Cyan")
+		[T]::PrintText("Cyan", "▶ 삭제 작업 시작")
+		[T]::PrintEmpty()
+
+		$totalDeleted = 0
+		$totalFailed = 0
+		$totalSkipped = 0
+
+		foreach ($root in $global:selectedRoots) {
+			[T]::PrintLine("White")
+			[T]::PrintText("White", "▶ 처리 중: $root")
+
+			$projects = [M]::FindProjectRoots($root)
+			[T]::PrintText("White", "▶ 발견된 프로젝트: $($projects.Count)개")
+			[T]::PrintEmpty()
+
+			$deleted = 0
+			$failed = 0
+			$skipped = 0
+
+			foreach ($project in $projects) {
+				# 제외된 프로젝트 건너뛰기
+				if ($global:excludedProjects -contains $project) {
+					$relativePath = $project.Replace($global:rootPath, "").TrimStart("\")
+					[T]::PrintText("DarkGray", "- 건너뜀 (제외됨): $relativePath")
+					$skipped++
+					continue
+				}
+
+				$targetDir = $global:commonPath -eq "" ? $project : (Join-Path $project $global:commonPath)
+
+				if (-not (Test-Path $targetDir)) {
+					continue
+				}
+
+				foreach ($target in $global:deleteTargets) {
+					$targetPath = Join-Path $targetDir $target
+
+					if (Test-Path $targetPath) {
+						try {
+							Remove-Item -Path $targetPath -Recurse -Force
+							[T]::PrintText("Green", "✓ 삭제: $targetPath")
+							$deleted++
+						}
+						catch {
+							[T]::PrintText("Red", "! 실패: $targetPath - $($_.Exception.Message)")
+							$failed++
+						}
+					}
+				}
+			}
+
+			[T]::PrintText("Green", "✓ 완료 - 삭제: $deleted | 실패: $failed | 건너뜀: $skipped")
+			$totalDeleted += $deleted
+			$totalFailed += $failed
+			$totalSkipped += $skipped
+		}
+
+		[T]::PrintLine("Green")
+		[T]::PrintText("Green", "▶ 전체 삭제 완료 - 삭제: $totalDeleted | 실패: $totalFailed | 건너뜀: $totalSkipped")
 	}
 
 	## 삭제 대상 입력
@@ -187,88 +268,6 @@ class M {
 		$includeCount = $global:allProjects.Count - $global:excludedProjects.Count
 		[T]::PrintEmpty()
 		[T]::PrintText("Green", "✓ 포함될 프로젝트: $includeCount 개")
-	}
-
-	## 삭제 확인
-	static [bool] ConfirmDelete() {
-		[T]::PrintLine("Red")
-		[T]::PrintText("Red", "▶ 삭제 작업 확인")
-		[T]::PrintText("White", "- 삭제 대상: $($global:deleteTargets -join ', ')")
-		[T]::PrintText("White", "- 대상 루트: $($global:selectedRoots -join ', ')")
-		[T]::PrintText("White", "- 공통 경로: $($global:commonPath -eq '' ? '(프로젝트 루트)' : $global:commonPath)")
-		[T]::PrintText("White", "- 제외 프로젝트: $($global:excludedProjects.Count)개")
-		[T]::PrintEmpty()
-		[T]::PrintText("Red", "! 이 작업은 되돌릴 수 없습니다.")
-		[T]::PrintEmpty()
-
-		$inputs = ""
-		[T]::TextInput("Red", "▶ 계속하시겠습니까? (y/n):", ([ref]$inputs))
-
-		return $inputs.Trim().ToLower() -eq "y"
-	}
-
-	## 삭제 실행
-	static [void] ExecuteDelete() {
-		[T]::PrintLine("Cyan")
-		[T]::PrintText("Cyan", "▶ 삭제 작업 시작")
-		[T]::PrintEmpty()
-
-		$totalDeleted = 0
-		$totalFailed = 0
-		$totalSkipped = 0
-
-		foreach ($root in $global:selectedRoots) {
-			[T]::PrintLine("White")
-			[T]::PrintText("White", "▶ 처리 중: $root")
-
-			$projects = [M]::FindProjectRoots($root)
-			[T]::PrintText("White", "▶ 발견된 프로젝트: $($projects.Count)개")
-			[T]::PrintEmpty()
-
-			$deleted = 0
-			$failed = 0
-			$skipped = 0
-
-			foreach ($project in $projects) {
-				# 제외된 프로젝트 건너뛰기
-				if ($global:excludedProjects -contains $project) {
-					$relativePath = $project.Replace($global:rootPath, "").TrimStart("\")
-					[T]::PrintText("DarkGray", "- 건너뜀 (제외됨): $relativePath")
-					$skipped++
-					continue
-				}
-
-				$targetDir = $global:commonPath -eq "" ? $project : (Join-Path $project $global:commonPath)
-
-				if (-not (Test-Path $targetDir)) {
-					continue
-				}
-
-				foreach ($target in $global:deleteTargets) {
-					$targetPath = Join-Path $targetDir $target
-
-					if (Test-Path $targetPath) {
-						try {
-							Remove-Item -Path $targetPath -Recurse -Force
-							[T]::PrintText("Green", "✓ 삭제: $targetPath")
-							$deleted++
-						}
-						catch {
-							[T]::PrintText("Red", "! 실패: $targetPath - $($_.Exception.Message)")
-							$failed++
-						}
-					}
-				}
-			}
-
-			[T]::PrintText("Green", "✓ 완료 - 삭제: $deleted | 실패: $failed | 건너뜀: $skipped")
-			$totalDeleted += $deleted
-			$totalFailed += $failed
-			$totalSkipped += $skipped
-		}
-
-		[T]::PrintLine("Green")
-		[T]::PrintText("Green", "▶ 전체 삭제 완료 - 삭제: $totalDeleted | 실패: $totalFailed | 건너뜀: $totalSkipped")
 	}
 }
 

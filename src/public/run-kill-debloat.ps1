@@ -1,4 +1,4 @@
-# kill-debloat.ps1
+# run-kill-debloat.ps1
 
 # 1. 공통 클래스 가져오기 ---------------------------------------------------------------------
 using module ..\lib\classes.psm1
@@ -11,14 +11,14 @@ $global:fileName = Split-Path -Leaf $PSCommandPath
 # 2. 메인 ----------------------------------------------------------------------------------------
 class M {
 	## 관리자 권한 확인
-	static [void] CheckAdmin() {
+	static [void] Run1() {
 		if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
 			[T]::PrintExit("Red", "! 관리자 권한으로 실행해주세요.")
 		}
 	}
 
 	## 레지스트리 항목 제거
-	static [void] RemoveRegistryItems() {
+	static [void] Run2() {
 		[T]::PrintLine("Green")
 		[T]::PrintText("Green", "✓ 파일 탐색기 홈/갤러리 항목 제거 시작...")
 
@@ -46,7 +46,7 @@ class M {
 	}
 
 	## 탐색기 재시작
-	static [void] RestartExplorer() {
+	static [void] Run3() {
 		[T]::PrintLine("Cyan")
 		[T]::PrintText("Cyan", "! 변경사항이 즉시 반영되지 않으면 PC를 재부팅하세요.")
 		[T]::PrintEmpty()
@@ -73,9 +73,9 @@ class M {
 
 # 4. 메인 로직 실행 ---------------------------------------------------------------------------
 & {
-	[M]::CheckAdmin()
-	[M]::RemoveRegistryItems()
-	[M]::RestartExplorer()
+	[M]::Run1()
+	[M]::Run2()
+	[M]::Run3()
 }
 
 # 99. 프로세스 종료 ---------------------------------------------------------------------------
