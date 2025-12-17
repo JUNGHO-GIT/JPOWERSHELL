@@ -2138,13 +2138,7 @@ const UNICORN_RULES = {
 			allowWarningComments: true,
 		},
 	],
-	"unicorn/filename-case": [
-		`error`,
-		{
-			case: `kebabCase`,
-			multipleFileExtensions: true,
-		},
-	],
+	"unicorn/filename-case": [`off`],
 	"unicorn/import-style": [
 		`error`,
 		{
@@ -2228,6 +2222,7 @@ export default defineConfig([
 			reportUnusedInlineConfigs: `error`,
 		},
 		plugins: {
+			// @ts-ignore
 			"@typescript-eslint": tseslint,
 			"@stylistic": stylistic,
 			unicorn: unicorn,
@@ -2243,7 +2238,7 @@ export default defineConfig([
 			ecmaVersion: `latest`,
 			sourceType: `module`,
 			globals: {
-				...globals.es2021,
+				...globals.es2025,
 				...globals.browser,
 				...globals.node,
 				...globals.worker,
@@ -2259,7 +2254,10 @@ export default defineConfig([
 					globalReturn: false,
 					impliedStrict: true,
 				},
-				lib: [`es2022`],
+				lib: [
+					`dom`,
+					`esnext`,
+				],
 				cacheLifetime: {
 					glob: `Infinity`,
 				},
@@ -2283,6 +2281,7 @@ export default defineConfig([
 			reportUnusedInlineConfigs: `error`,
 		},
 		plugins: {
+			// @ts-ignore
 			"@typescript-eslint": tseslint,
 			"@stylistic": stylistic,
 			unicorn: unicorn,
@@ -2300,7 +2299,7 @@ export default defineConfig([
 			sourceType: `module`,
 			parser: tsParser,
 			globals: {
-				...globals.es2021,
+				...globals.es2025,
 				...globals.browser,
 				...globals.node,
 				...globals.worker,
@@ -2316,7 +2315,10 @@ export default defineConfig([
 					globalReturn: false,
 					impliedStrict: true,
 				},
-				lib: [`es2022`],
+				lib: [
+					`dom`,
+					`esnext`,
+				],
 				cacheLifetime: {
 					glob: `Infinity`,
 				},

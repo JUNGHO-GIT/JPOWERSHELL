@@ -266,7 +266,7 @@ export const getProjectType = (args = ``) => {
 	const hasFile = (fp = ``) => fs.existsSync(path.isAbsolute(fp) ? fp : path.join(process.cwd(), fp));
 
 	!isClient && !isServer && (() => {
-		logger(`error`, `프로���트 타입을 지정해주세요: --client 또는 --server`);
+		logger(`error`, `프로젝트 타입을 지정해주세요: --client 또는 --server`);
 		process.exit(1);
 	})();
 
