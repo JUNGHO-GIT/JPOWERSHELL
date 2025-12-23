@@ -46,7 +46,9 @@ class T {
 
 		$result = $inputs -ne "exit"
 		$shouldRerun = $result -and $inputs -eq "" -and $scriptPath -and (Test-Path $scriptPath)
-		$shouldRerun && (. $scriptPath)
+		if ($shouldRerun) {
+			. $scriptPath 
+		}
 
 		return $result
 	}
@@ -60,12 +62,16 @@ class T {
 		$result = ""
 		foreach ($ch in $str.ToCharArray()) {
 			$len = [System.Text.Encoding]::GetEncoding("euc-kr").GetByteCount($ch)
-			($width + $len -gt $target) && (break)
+			if ($width + $len -gt $target) {
+				break 
+			}
 			$result += $ch
 			$width += $len
 		}
 		$pad = $target - $width
-		($pad -gt 0) && ($result += " " * $pad)
+		if ($pad -gt 0) {
+			$result += " " * $pad 
+		}
 		return $result
 	}
 
